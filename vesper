@@ -1,0 +1,14 @@
+#!/bin/sh
+# Launcher: build the native shell on first run, then open it.
+set -eu
+cd "$(dirname "$0")"
+
+if [ "${1:-}" = "--server" ]; then
+  exec node server.mjs --port="${2:-4173}"
+fi
+
+if [ ! -d "Vesper.app" ]; then
+  sh mac/build.sh
+fi
+
+open "Vesper.app"

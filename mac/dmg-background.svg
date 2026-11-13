@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="420" viewBox="0 0 660 420">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="38%" r="68%">
+      <stop offset="0" stop-color="#1a1c1f"/>
+      <stop offset="1" stop-color="#0a0b0c"/>
+    </radialGradient>
+  </defs>
+  <rect width="660" height="420" fill="url(#glow)"/>
+  <rect x="0.5" y="0.5" width="659" height="419" fill="none" stroke="#24272b"/>
+  <text x="330" y="60" text-anchor="middle" font-family="Helvetica Neue, Helvetica, sans-serif" font-size="12" letter-spacing="6" fill="#6d6a62">VESPER</text>
+  <g stroke="#33363a" stroke-width="1">
+    <path d="M258 206h54"/>
+    <path d="M348 206h54"/>
+  </g>
+  <path d="M312 200l8 6-8 6" fill="none" stroke="#d9a566" stroke-width="1.2" opacity="0.7"/>
+  <text x="330" y="352" text-anchor="middle" font-family="Helvetica Neue, Helvetica, sans-serif" font-size="13" letter-spacing="3.4" fill="#8a8578">DRAG VESPER TO APPLICATIONS</text>
+  <text x="330" y="376" text-anchor="middle" font-family="Helvetica Neue, Helvetica, sans-serif" font-size="10" letter-spacing="2.2" fill="#55575b">MACOS 13 OR NEWER</text>
+</svg>

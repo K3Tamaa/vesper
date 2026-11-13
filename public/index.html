@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Vesper</title>
+  <link rel="icon" href="/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-link" viewBox="0 0 20 20">
+    <path d="M8.2 11.8a3.4 3.4 0 0 0 4.8 0l2.6-2.6a3.4 3.4 0 0 0-4.8-4.8l-1 1" />
+    <path d="M11.8 8.2a3.4 3.4 0 0 0-4.8 0l-2.6 2.6a3.4 3.4 0 0 0 4.8 4.8l1-1" />
+  </symbol>
+  <symbol id="i-archive" viewBox="0 0 20 20">
+    <rect x="2.75" y="3.25" width="14.5" height="13.5" rx="2" />
+    <path d="M2.75 7.25h14.5M7.5 10.5h5" />
+  </symbol>
+  <symbol id="i-sliders" viewBox="0 0 20 20">
+    <path d="M3 6h8M15 6h2M3 14h2M9 14h8" />
+    <circle cx="13" cy="6" r="1.9" /><circle cx="7" cy="14" r="1.9" />
+  </symbol>
+  <symbol id="i-x" viewBox="0 0 20 20"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" /></symbol>
+  <symbol id="i-check" viewBox="0 0 20 20"><path d="M4.5 10.5l3.6 3.6 7.4-8" /></symbol>
+  <symbol id="i-folder" viewBox="0 0 20 20">
+    <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h3l1.6 2h6.4A1.5 1.5 0 0 1 17 8.5v6A1.5 1.5 0 0 1 15.5 16h-11A1.5 1.5 0 0 1 3 14.5z" />
+  </symbol>
+  <symbol id="i-external" viewBox="0 0 20 20">
+    <path d="M11 4h5v5M16 4l-7 7" /><path d="M14.5 11.5v3A1.5 1.5 0 0 1 13 16H5.5A1.5 1.5 0 0 1 4 14.5V7A1.5 1.5 0 0 1 5.5 5.5h3" />
+  </symbol>
+  <symbol id="i-copy" viewBox="0 0 20 20">
+    <rect x="7" y="7" width="9" height="9" rx="1.6" />
+    <path d="M13 7V5.6A1.6 1.6 0 0 0 11.4 4H5.6A1.6 1.6 0 0 0 4 5.6v5.8A1.6 1.6 0 0 0 5.6 13H7" />
+  </symbol>
+  <symbol id="i-refresh" viewBox="0 0 20 20">
+    <path d="M15.6 8.4A6 6 0 1 0 16 11" /><path d="M16 4v4.4h-4.4" />
+  </symbol>
+  <symbol id="i-chevron" viewBox="0 0 20 20"><path d="M6 8l4 4 4-4" /></symbol>
+  <symbol id="i-alert" viewBox="0 0 20 20">
+    <circle cx="10" cy="10" r="7" /><path d="M10 6.4v4.2M10 13.4v.2" />
+  </symbol>
+  <symbol id="i-film" viewBox="0 0 20 20">
+    <rect x="2.75" y="4.25" width="14.5" height="11.5" rx="2" />
+    <path d="M6.4 4.25v11.5M13.6 4.25v11.5M2.75 10h14.5" />
+  </symbol>
+  <symbol id="i-music" viewBox="0 0 20 20">
+    <path d="M12.5 4.5l-1 8.2" /><circle cx="9.2" cy="13.6" r="2.3" /><path d="M12.5 4.5l3.4.9" />
+  </symbol>
+  <symbol id="i-queue" viewBox="0 0 20 20">
+    <path d="M3 5.5h9M3 10h9M3 14.5h6" /><path d="M15 12.2v4.2M13 14.3h4" />
+  </symbol>
+  <symbol id="i-download" viewBox="0 0 20 20">
+    <path d="M10 3.5v8.2M6.6 8.6L10 12l3.4-3.4" /><path d="M4 15.5h12" />
+  </symbol>
+  <symbol id="i-trash" viewBox="0 0 20 20">
+    <path d="M4 6.5h12M8 6.5V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5" />
+    <path d="M6.2 6.5l.6 8.4a1.5 1.5 0 0 0 1.5 1.4h3.4a1.5 1.5 0 0 0 1.5-1.4l.6-8.4" />
+  </symbol>
+  <symbol id="i-star" viewBox="0 0 20 20">
+    <path d="M10 3.4l1.9 4 4.4.6-3.2 3.1.8 4.4-3.9-2.1-3.9 2.1.8-4.4L3.7 8l4.4-.6z" />
+  </symbol>
+</svg>
+
+<div class="app" id="app">
+  <aside class="rail">
+    <nav class="rail-nav" aria-label="Sections">
+      <button class="rail-btn is-active" data-view="inspect" aria-label="Inspect" aria-current="page">
+        <svg class="icon"><use href="#i-link"/></svg>
+        <span class="tip">Inspect</span>
+      </button>
+      <button class="rail-btn" data-view="archive" aria-label="Archive">
+        <svg class="icon"><use href="#i-archive"/></svg>
+        <span class="tip">Archive</span>
+      </button>
+      <button class="rail-btn" data-view="settings" aria-label="Settings">
+        <svg class="icon"><use href="#i-sliders"/></svg>
+        <span class="tip">Settings</span>
+      </button>
+    </nav>
+    <div class="rail-foot">
+      <button class="rail-lamp" id="railLamp" data-goto="settings" aria-label="Binary status">
+        <span class="lamp" id="railLampDot" data-tone="idle"></span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="wordmark">
+        <span class="wordmark-dot" aria-hidden="true"></span>
+        <span class="wordmark-text">Vesper</span>
+      </div>
+      <div class="statusline">
+        <button class="status" id="statusBinary" data-goto="settings">
+          <span class="lamp" id="binaryLamp" data-tone="idle"></span>
+          <span class="mono" id="binaryVersion">yt-dlp</span>
+          <span class="tag" id="binarySource">system</span>
+        </button>
+        <span class="status-sep" aria-hidden="true"></span>
+        <span class="status" title="ffmpeg status">
+          <span class="mono" id="ffmpegState">ffmpeg</span>
+        </span>
+        <span class="status-sep" aria-hidden="true"></span>
+        <button class="status" id="statusChannel" data-goto="settings">
+          <span class="mono" id="channelState">NIGHTLY</span>
+        </button>
+        <button class="icon-btn queue-toggle" id="queueToggle" aria-label="Toggle queue">
+          <svg class="icon"><use href="#i-queue"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="views" id="views">
+
+      <section class="view is-active" data-view="inspect">
+        <div class="intake">
+          <form class="field" id="urlForm" autocomplete="off">
+            <svg class="icon field-icon"><use href="#i-link"/></svg>
+            <input id="url" type="text" inputmode="url" spellcheck="false"
+                   placeholder="Paste a link: video, playlist, or track"
+                   aria-label="Media link" autocomplete="off">
+            <button class="btn-primary" id="inspectBtn" type="submit" disabled>Inspect</button>
+          </form>
+          <p class="hint">
+            <kbd>⌘V</kbd> to paste <span class="dot">·</span> <kbd>⌘↵</kbd> to inspect
+            <span class="dot">·</span> Nothing downloads until you confirm a format
+          </p>
+        </div>
+
+        <div class="stage" id="stage">
+          <div class="stage-empty" id="stageEmpty">
+            <div class="empty-idle" id="emptyIdle">
+              <svg class="icon stage-glyph"><use href="#i-film"/></svg>
+              <p>Paste a link to begin.</p>
+              <span>Vesper reads the media first, then lets you choose exactly what to keep.</span>
+            </div>
+            <div class="setup-card" id="setupCard" hidden>
+              <div class="setup-head">
+                <span class="label">First run</span>
+                <h2>Two local tools, installed once.</h2>
+                <p>Vesper runs yt-dlp and ffmpeg from its own folder. Every archive is checked
+                   against the publisher's SHA-256 before it becomes executable.</p>
+              </div>
+              <div class="setup-tools">
+                <div class="setup-tool" data-tool="yt-dlp">
+                  <span class="lamp" id="setupLampYtdlp" data-tone="idle"></span>
+                  <div class="setup-tool-body">
+                    <span class="setup-tool-name">yt-dlp</span>
+                    <span class="setup-tool-state" id="setupYtdlpState">Not installed</span>
+                  </div>
+                  <button class="btn-quiet" id="setupYtdlp">Install</button>
+                </div>
+                <div class="setup-tool" data-tool="ffmpeg">
+                  <span class="lamp" id="setupLampFfmpeg" data-tone="idle"></span>
+                  <div class="setup-tool-body">
+                    <span class="setup-tool-name">ffmpeg + ffprobe</span>
+                    <span class="setup-tool-state" id="setupFfmpegState">Not installed</span>
+                  </div>
+                  <button class="btn-quiet" id="setupFfmpeg">Install</button>
+                </div>
+              </div>
+              <div class="setup-actions">
+                <button class="btn-primary" id="setupAll">Install both</button>
+                <span class="mono dim" id="setupHint">Downloads come from GitHub and ffmpeg.martin-riedl.de</span>
+              </div>
+            </div>
+          </div>
+          <div class="skeleton" id="skeleton" hidden>
+            <div class="sk-thumb"></div>
+            <div class="sk-body">
+              <span class="sk-line" style="width:62%"></span>
+              <span class="sk-line" style="width:38%"></span>
+              <span class="sk-line sk-gap" style="width:84%"></span>
+            </div>
+          </div>
+          <div class="stage-error" id="stageError" hidden>
+            <svg class="icon"><use href="#i-alert"/></svg>
+            <div>
+              <p id="stageErrorTitle">Could not read that link</p>
+              <span id="stageErrorBody"></span>
+            </div>
+            <button class="btn-quiet" id="errorRetry">Try again</button>
+          </div>
+          <div id="result"></div>
+        </div>
+
+        <div class="commit" id="commit" hidden>
+          <button class="path" id="outputPath" title="Change the output folder">
+            <svg class="icon"><use href="#i-folder"/></svg>
+            <span class="mono" id="outputLabel"></span>
+          </button>
+          <span class="commit-summary mono" id="commitSummary"></span>
+          <button class="btn-primary" id="downloadBtn" disabled>Download</button>
+        </div>
+      </section>
+
+      <section class="view" data-view="archive">
+        <div class="view-head">
+          <div>
+            <h1>Archive</h1>
+            <p>Finished downloads, kept alongside the files themselves.</p>
+          </div>
+          <button class="btn-quiet" id="clearArchive">Clear archive</button>
+        </div>
+        <div class="archive" id="archiveTable">
+          <div class="arc-head">
+            <span></span>
+            <span class="label">Title</span>
+            <span class="label">Format</span>
+            <span class="label">Size</span>
+            <span class="label">Saved</span>
+            <span></span>
+          </div>
+          <div id="archiveList"></div>
+        </div>
+        <div class="stage-empty archive-empty" id="archiveEmpty" hidden>
+          <svg class="icon stage-glyph"><use href="#i-archive"/></svg>
+          <p>Nothing archived yet.</p>
+          <span>Completed downloads land here and stay until you remove them.</span>
+        </div>
+      </section>
+
+      <section class="view" data-view="settings">
+        <div class="view-head">
+          <div>
+            <h1>Settings</h1>
+            <p>Local only. Vesper contacts GitHub for builds and the sites you point it at.</p>
+          </div>
+        </div>
+
+        <section class="group">
+          <h2 class="label">Binary</h2>
+          <div class="rows">
+            <div class="row">
+              <div class="row-label">
+                <span class="row-title">Channel</span>
+                <span class="row-desc">Nightly tracks upstream fixes within a day. Stable follows the monthly release.</span>
+              </div>
+              <div class="switch" id="channelSwitch" role="radiogroup" aria-label="Release channel">
+                <span class="switch-pill" id="switchPill"></span>
+                <button type="button" data-channel="nightly" role="radio" aria-checked="false">Nightly</button>
+                <button type="button" data-channel="stable" role="radio" aria-checked="false">Stable</button>
+              </div>
+            </div>
+            <div class="row">
+              <div class="row-label">
+                <span class="row-title">Installed build</span>
+                <span class="row-desc" id="binaryPathDesc"></span>
+              </div>
+              <div class="row-control row-inline">
+                <span class="mono dim" id="binaryVersionSetting"></span>
+              </div>
+            </div>
+            <div class="row">
+              <div class="row-label">
+                <span class="row-title">Channel head</span>
+                <span class="row-desc" id="releaseDesc">Not checked yet.</span>
+              </div>
+              <div class="row-control row-inline">
+                <button class="btn-quiet" id="checkBuild">Check</button>
+                <button class="btn-primary" id="installBtn">Install</button>
+              </div>
+            </div>
+            <div class="row">
+              <div class="row-label">
+                <span class="row-title">ffmpeg</span>
+                <span class="row-desc" id="ffmpegDesc">Required for merging video with audio, and for audio extraction.</span>
+              </div>
+              <div class="row-control row-inline">
+                <span class="mono dim" id="ffmpegVersionSetting"></span>
+                <button class="btn-quiet" id="installFfmpeg">Install</button>
+              </div>
+            </div>
+          </div>
+          <div class="install-panel" id="installPanel" hidden>
+            <div class="install-head">
+              <span class="lamp" id="installLamp" data-tone="busy"></span>
+              <span id="installText">Downloading build</span>
+              <span class="mono dim" id="installPct"></span>
+            </div>
+            <div class="install-track"><span class="install-fill" id="installFill"></span></div>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2 class="label">Output</h2>
+          <div class="rows">
+            <div class="row">
+              <div class="row-label">
+                <span class="row-title">Folder</span>
+                <span class="row-desc">Where finished files are written.</span>
+              </div>
+              <div class="row-control row-inline">
+                <input class="input mono" id="folderField" spellcheck="false" aria-label="Output folder">
+                <button class="btn-quiet" id="pickFolder">Choose…</button>
+              </div>
+            </div>
+            <div class="row">
+              <div class="row-label">
+                <span class="row-title">Filename</span>
+                <span class="row-desc">yt-dlp output template. Keep the extension placeholder intact.</span>
+              </div>
+              <input class="input mono" id="templateField" spellcheck="false" aria-label="Filename template">
+            </div>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2 class="label">Behaviour</h2>
+          <div class="rows">
+            <div class="row">
+              <div class="row-label">
+                <span class="row-title">Simultaneous downloads</span>
+                <span class="row-desc">Extra parallel jobs compete for bandwidth.</span>
+              </div>
+              <div class="stepper" data-stepper>
+                <button type="button" data-step="-1" aria-label="Decrease">−</button>
+                <span class="mono" id="concurrencyValue">2</span>
+                <button type="button" data-step="1" aria-label="Increase">+</button>
+              </div>
+            </div>
+            <div class="row">
+              <div class="row-label">
+                <span class="row-title">Default format</span>
+                <span class="row-desc" id="defaultFormatDesc"></span>
+              </div>
+              <button class="btn-quiet" id="resetDefault">Use built-in</button>
+            </div>
+            <div class="row">
+              <div class="row-label">
+                <span class="row-title">Cookies from browser</span>
+                <span class="row-desc">Lets yt-dlp use an existing session for private or age-gated media.</span>
+              </div>
+              <select class="input select" id="cookiesField" aria-label="Cookies from browser">
+                <option value="">Off</option>
+                <option value="safari">Safari</option>
+                <option value="chrome">Chrome</option>
+                <option value="brave">Brave</option>
+                <option value="firefox">Firefox</option>
+                <option value="edge">Edge</option>
+              </select>
+            </div>
+            <div class="row">
+              <div class="row-label">
+                <span class="row-title">Extra arguments</span>
+                <span class="row-desc">Passed to yt-dlp verbatim, split on spaces.</span>
+              </div>
+              <input class="input mono" id="extraArgsField" spellcheck="false" placeholder="--proxy socks5://127.0.0.1:9050" aria-label="Extra yt-dlp arguments">
+            </div>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2 class="label">About</h2>
+          <div class="rows">
+            <div class="row">
+              <div class="row-label">
+                <span class="row-title" id="appVersionLabel">Vesper</span>
+                <span class="row-desc" id="appVersionDesc">A quiet client for <button class="link" id="repoLink">yt-dlp</button>.</span>
+              </div>
+              <div class="row-control row-inline">
+                <span class="mono dim" id="nodeVersion"></span>
+                <button class="btn-quiet" id="checkUpdate">Check for updates</button>
+                <button class="btn-primary" id="updateBtn" hidden>Update</button>
+              </div>
+            </div>
+            <div class="row">
+              <div class="row-label">
+                <span class="row-title">Privacy</span>
+                <span class="row-desc">No telemetry, no accounts, no logs. Vesper talks to GitHub for tools and
+                  updates, and to the sites you paste.</span>
+              </div>
+              <button class="link" id="privacyLink">Details</button>
+            </div>
+            <div class="row">
+              <div class="row-label">
+                <span class="row-title">Application data</span>
+                <span class="row-desc mono small" id="dataPath"></span>
+              </div>
+              <button class="btn-quiet" id="revealData">Open</button>
+            </div>
+          </div>
+          <div class="install-panel" id="updatePanel" hidden>
+            <div class="install-head">
+              <span class="lamp" id="updateLamp" data-tone="busy"></span>
+              <span id="updateText">Downloading update</span>
+              <span class="mono dim" id="updatePct"></span>
+            </div>
+            <div class="install-track"><span class="install-fill" id="updateFill"></span></div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <aside class="queue" id="queue">
+    <header class="queue-head">
+      <span class="label">Queue</span>
+      <span class="queue-count mono" id="queueCount">0</span>
+      <span class="grow"></span>
+      <button class="icon-btn" id="clearQueue" aria-label="Clear finished jobs" title="Clear finished">
+        <svg class="icon"><use href="#i-trash"/></svg>
+      </button>
+    </header>
+    <div class="queue-body">
+      <div id="activeList" class="job-list"></div>
+      <div class="queue-empty" id="queueEmpty">
+        <span class="idle-lamp" aria-hidden="true"></span>
+        <p>Queue is clear.</p>
+        <span>Downloads appear here the moment you start one.</span>
+      </div>
+      <div class="queue-section" id="doneSection" hidden>
+        <div class="queue-sub label">Finished</div>
+        <div id="doneList" class="job-list"></div>
+      </div>
+    </div>
+  </aside>
+  <div class="queue-scrim" id="queueScrim" hidden></div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script type="module" src="/app.js"></script>
+</body>
+</html>
