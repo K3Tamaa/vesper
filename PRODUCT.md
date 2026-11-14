@@ -41,7 +41,8 @@ it came from.
 - The files are the user's. Removing an archive entry does not delete anything.
 - Format setups are user property: named presets, one of them the default for new
   links, stored locally with the rest of the settings.
-- The queue is durable across restarts; interrupted jobs become errors, not ghosts.
+- The queue is durable across restarts: queued jobs resume, a job interrupted
+  mid-download becomes an error with Retry.
 - Formats are honest: sizes are estimates from yt-dlp metadata and are labelled with `≈`.
 
 ## Non-goals

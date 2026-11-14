@@ -91,13 +91,19 @@ function thumbUrl(url) {
 }
 
 async function api(path, options = {}) {
+  const method = options.method || (options.body ? 'POST' : 'GET');
+  const headers = { 'X-Vesper': '1' };
+  if (method !== 'GET' && method !== 'HEAD') headers['Content-Type'] = 'application/json';
   const response = await fetch(path, {
-    method: options.method || (options.body ? 'POST' : 'GET'),
-    headers: options.body ? { 'Content-Type': 'application/json' } : undefined,
+    method,
+    headers,
     body: options.body ? JSON.stringify(options.body) : undefined
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+  if (Array.isArray(data.warnings) && data.warnings.length) {
+    toast(data.warnings[0], 'bad');
+  }
   return data;
 }
 
@@ -1582,9 +1588,6 @@ function bindArchive() {
     if (button.dataset.arc === 'remove') {
       api(`/api/history/${encodeURIComponent(id)}/remove`, { method: 'POST' }).catch(() => {});
     }
-    if (button.dataset.arc === 'open') {
-      api('/api/open', { body: { url: entry.url } }).catch(() => {});
-    }
   });
 }
 
@@ -1791,7 +1794,9 @@ function renderSettings() {
   $('#folderField').title = folder;
   if (document.activeElement !== $('#templateField')) $('#templateField').value = settings.filenameTemplate || '';
   if (document.activeElement !== $('#extraArgsField')) $('#extraArgsField').value = settings.extraArgs || '';
-  $('#cookiesField').value = settings.cookiesBrowser || '';
+  if (document.activeElement !== $('#cookiesField')) {
+    $('#cookiesField').value = settings.cookiesBrowser || '';
+  }
   $('#concurrencyValue').textContent = String(settings.concurrency);
   $('#nodeVersion').textContent = `node ${status.node}`;
   $('#dataPath').textContent = status.dataDir || '';
@@ -1879,7 +1884,7 @@ async function installTool(kind, { quiet = false } = {}) {
     $('#installLamp').dataset.tone = 'ok';
     $('#installText').textContent =
       kind === 'ffmpeg'
-        ? `ffmpeg ${data.version} · ffprobe ${data.probeVersion} · checksum verified`
+        ? `ffmpeg ${data.version} · ffprobe ${data.probeVersion}${data.verified ? ' · checksum verified' : ''}`
         : `Build ${data.version} installed${data.verified ? ' · checksum verified' : ''}`;
     state.status = data.status;
     if (!quiet) {

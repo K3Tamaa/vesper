@@ -299,6 +299,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         NSApp.mainMenu = main
     }
 
+    // MARK: - Navigation
+
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        guard let url = navigationAction.request.url else {
+            decisionHandler(.allow)
+            return
+        }
+        let scheme = (url.scheme ?? "").lowercased()
+        if scheme == "about" || scheme == "blob" || scheme == "data" {
+            decisionHandler(.allow)
+            return
+        }
+        let host = (url.host ?? "").lowercased()
+        if host == "127.0.0.1" || host == "localhost" {
+            decisionHandler(.allow)
+            return
+        }
+        // Anything outside the local server belongs in the user's browser.
+        if scheme == "http" || scheme == "https" {
+            NSWorkspace.shared.open(url)
+        }
+        decisionHandler(.cancel)
+    }
+
     @objc private func reloadPage() {
         webView.reload()
     }

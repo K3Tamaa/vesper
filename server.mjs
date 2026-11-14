@@ -16,7 +16,7 @@ import {
   probe,
   releaseInfo
 } from './lib/ytdlp.mjs';
-import { ffmpegStatus, installFfmpeg } from './lib/ffmpeg.mjs';
+import { ffmpegStatus, installFfmpeg, resetFfmpegCache } from './lib/ffmpeg.mjs';
 import {
   checkForUpdate,
   currentVersion,
@@ -26,6 +26,20 @@ import {
 import { Queue } from './lib/jobs.mjs';
 import { sanitizePresets, sanitizeSpec, specLabel } from './lib/formats.mjs';
 import { dataDir, ensureDir, expandHome, prettyPath } from './lib/util.mjs';
+import {
+  checkCookiesBrowser,
+  checkExecutablePath,
+  checkExtraArgs
+} from './lib/guard.mjs';
+import {
+  hostHeaderAllowed,
+  isPrivateHost,
+  openUrlAllowed,
+  originAllowed,
+  postHeadersAllowed,
+  revealTargetAllowed,
+  thumbUrlAllowed
+} from './lib/security.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(ROOT, 'public');
@@ -48,6 +62,20 @@ let settings = loadSettings();
 const queue = new Queue({ getSettings: () => settings });
 const clients = new Set();
 const thumbCache = new Map();
+const thumbHosts = new Set();
+
+/** Remember thumbnail hosts seen in real metadata, so the proxy can serve them. */
+function rememberThumb(url) {
+  try {
+    const host = new URL(String(url || '')).hostname.toLowerCase();
+    if (!host || isPrivateHost(host)) return;
+    thumbHosts.add(host);
+    if (thumbHosts.size > 50) thumbHosts.delete(thumbHosts.values().next().value);
+  } catch {}
+}
+
+for (const entry of loadHistory().slice(0, 50)) rememberThumb(entry.thumbnail);
+for (const job of queue.list().slice(0, 50)) rememberThumb(job.thumbnail);
 
 const releaseState = { nightly: null, stable: null, error: null };
 const appState = { info: null, at: null, error: null, downloaded: null, checking: false };
@@ -168,9 +196,6 @@ function broadcast(event, data) {
 }
 
 queue.on('changed', (jobs) => {
-  if (queue.activeCount() === 0) {
-    // still broadcast; active count drives client-side idle states
-  }
   broadcast('jobs', jobs);
 });
 queue.on('job:finished', async (job) => {
@@ -186,13 +211,26 @@ const server = http.createServer(async (req, res) => {
   const route = url.pathname;
   const method = req.method || 'GET';
 
+  // The server is only ever addressed by the app window on this Mac. A request
+  // that names another host (DNS rebinding) or another origin is refused before
+  // it can reach a route.
+  if (!hostHeaderAllowed(req.headers.host, PORT)) {
+    return fail(res, 403, 'Forbidden host.');
+  }
+  if (!originAllowed(req.headers.origin, PORT)) {
+    return fail(res, 403, 'Forbidden origin.');
+  }
+  if (method === 'POST' && !postHeadersAllowed(req.headers)) {
+    return fail(res, 403, 'Missing Vesper request header.');
+  }
+
   try {
     if (route.startsWith('/api/')) {
-      if (method === 'OPTIONS') return send(res, 204, '');
       return await handleAPI(req, res, route, url, method);
     }
     return serveStatic(req, res, route);
   } catch (error) {
+    if (error?.code === 'EBUSY') return fail(res, 409, error.message);
     fail(res, 500, String(error?.message || error));
   }
 });
@@ -265,10 +303,46 @@ async function handleAPI(req, res, route, url, method) {
       delete clean.channel;
     }
     if ('checkUpdates' in clean) clean.checkUpdates = Boolean(clean.checkUpdates);
+
+    const warnings = [];
+    if ('extraArgs' in clean) {
+      const extra = checkExtraArgs(clean.extraArgs);
+      if (extra.ok) clean.extraArgs = extra.value;
+      else {
+        delete clean.extraArgs;
+        warnings.push(extra.error);
+      }
+    }
+    if ('binaryPath' in clean) {
+      const custom = checkExecutablePath(clean.binaryPath);
+      if (custom.ok) clean.binaryPath = custom.path;
+      else {
+        delete clean.binaryPath;
+        warnings.push(custom.error);
+      }
+    }
+    if ('ffmpegPath' in clean) {
+      const custom = checkExecutablePath(clean.ffmpegPath);
+      if (custom.ok) clean.ffmpegPath = custom.path;
+      else {
+        delete clean.ffmpegPath;
+        warnings.push(custom.error);
+      }
+      resetFfmpegCache();
+    }
+    if ('cookiesBrowser' in clean) {
+      const browser = checkCookiesBrowser(clean.cookiesBrowser);
+      if (browser.ok) clean.cookiesBrowser = browser.value;
+      else {
+        delete clean.cookiesBrowser;
+        warnings.push(browser.error);
+      }
+    }
+
     settings = saveSettings(clean);
     if (clean.channel) refreshRelease(clean.channel).catch(() => {});
     broadcast('status', await statusSnapshot());
-    return send(res, 200, { settings });
+    return send(res, 200, { settings, warnings });
   }
 
   if (route === '/api/probe' && method === 'POST') {
@@ -278,6 +352,8 @@ async function handleAPI(req, res, route, url, method) {
       return fail(res, 400, 'Enter a full link starting with http:// or https://.');
     }
     const result = await probe(target, settings);
+    rememberThumb(result.thumbnail);
+    for (const entry of result.entries || []) rememberThumb(entry.thumbnail);
     return send(res, 200, result);
   }
 
@@ -289,6 +365,10 @@ async function handleAPI(req, res, route, url, method) {
     const items = Array.isArray(body.items)
       ? [...new Set(body.items.map((n) => Number(n)).filter((n) => Number.isInteger(n) && n > 0))].slice(0, 500)
       : null;
+    if (body.kind === 'playlist' && (!items || !items.length)) {
+      return fail(res, 400, 'Select at least one item from the playlist.');
+    }
+    rememberThumb(body.thumbnail);
     const job = queue.enqueue({
       url: target,
       title: String(body.title || target).slice(0, 300),
@@ -382,7 +462,8 @@ async function handleAPI(req, res, route, url, method) {
     const result = installUpdate({
       dmg: appState.downloaded.path,
       appPath: process.env.VESPER_APP_PATH || '',
-      pid: process.ppid
+      pid: process.ppid,
+      sha256: appState.downloaded.sha256
     });
     return send(res, 200, result);
   }
@@ -427,6 +508,18 @@ async function handleAPI(req, res, route, url, method) {
     const body = await readJSON(req);
     const target = expandHome(String(body.path || ''));
     if (!target || !fs.existsSync(target)) return fail(res, 404, 'That path does not exist.');
+    const extraFiles = queue
+      .list()
+      .flatMap((job) => [job.file, ...(job.files || [])])
+      .filter(Boolean);
+    const allowed = revealTargetAllowed(target, {
+      folder: Boolean(body.folder),
+      dataDir: dataDir(),
+      outputDir: settings.outputDir,
+      history: loadHistory(),
+      extraFiles
+    });
+    if (!allowed) return fail(res, 403, 'This path is outside the folders Vesper manages.');
     execFile('open', [body.folder ? target : '-R', ...(body.folder ? [] : [target])]);
     return send(res, 200, { ok: true });
   }
@@ -434,7 +527,7 @@ async function handleAPI(req, res, route, url, method) {
   if (route === '/api/open' && method === 'POST') {
     const body = await readJSON(req);
     const target = String(body.url || '');
-    if (!/^https?:\/\//i.test(target)) return fail(res, 400, 'Not a valid link.');
+    if (!openUrlAllowed(target)) return fail(res, 400, 'Not a valid link.');
     execFile('open', [target]);
     return send(res, 200, { ok: true });
   }
@@ -454,23 +547,39 @@ async function handleAPI(req, res, route, url, method) {
 
   if (route === '/api/thumb' && method === 'GET') {
     const target = url.searchParams.get('u') || '';
-    if (!/^https?:\/\//i.test(target)) return fail(res, 400, 'Bad image address.');
+    if (!thumbUrlAllowed(target, [...thumbHosts])) return fail(res, 400, 'Image host is not allowed.');
     try {
       const cached = thumbCache.get(target);
       if (cached && Date.now() - cached.at < 3_600_000) {
         return send(res, 200, cached.body, { 'Content-Type': cached.type, 'Cache-Control': 'public, max-age=3600' });
       }
-      const response = await fetch(target, {
-        headers: { 'User-Agent': 'Mozilla/5.0 Vesper', Accept: 'image/*' },
-        signal: AbortSignal.timeout(12_000)
-      });
-      if (!response.ok) return fail(res, 502, 'Image unavailable.');
+
+      let current = target;
+      let response = null;
+      for (let hop = 0; hop < 4; hop += 1) {
+        response = await fetch(current, {
+          headers: { 'User-Agent': 'Mozilla/5.0 Vesper', Accept: 'image/*' },
+          redirect: 'manual',
+          signal: AbortSignal.timeout(12_000)
+        });
+        if (response.status < 300 || response.status >= 400) break;
+        const location = response.headers.get('location');
+        if (!location) break;
+        const next = new URL(location, current);
+        if (next.protocol !== 'http:' && next.protocol !== 'https:') {
+          return fail(res, 502, 'Image unavailable.');
+        }
+        if (isPrivateHost(next.hostname)) return fail(res, 400, 'Image host is not allowed.');
+        current = next.href;
+      }
+
+      if (!response || !response.ok) return fail(res, 502, 'Image unavailable.');
       const type = response.headers.get('content-type') || 'image/jpeg';
       if (!type.startsWith('image/')) return fail(res, 415, 'Not an image.');
       const body = Buffer.from(await response.arrayBuffer());
-      if (body.length > 8_000_000) return fail(res, 413, 'Image too large.');
+      if (body.length > 3_000_000) return fail(res, 413, 'Image too large.');
       thumbCache.set(target, { at: Date.now(), body, type });
-      if (thumbCache.size > 120) thumbCache.delete(thumbCache.keys().next().value);
+      while (thumbCache.size > 40) thumbCache.delete(thumbCache.keys().next().value);
       return send(res, 200, body, { 'Content-Type': type, 'Cache-Control': 'public, max-age=3600' });
     } catch {
       return fail(res, 502, 'Image unavailable.');
@@ -510,8 +619,12 @@ function serveStatic(req, res, route) {
 server.listen(PORT, '127.0.0.1', async () => {
   console.log(`Vesper running at http://127.0.0.1:${PORT}`);
   await binaryStatus(settings, { refresh: true });
-  refreshRelease(settings.channel).catch(() => {});
-  if (settings.checkUpdates) refreshAppUpdate(false).catch(() => {});
+  if (process.env.VESPER_SKIP_NETWORK !== '1') {
+    refreshRelease(settings.channel).catch(() => {});
+    if (settings.checkUpdates) refreshAppUpdate(false).catch(() => {});
+  }
+  // Jobs that were still queued when the app quit resume now.
+  queue.pump();
 });
 
 server.on('error', (error) => {

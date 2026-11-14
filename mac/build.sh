@@ -97,6 +97,8 @@ fi
 
 # ----------------------------------------------------------------------- sign
 
-codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true
+if ! codesign --force --deep --sign - "$APP" >/dev/null 2>&1; then
+  echo "warning: ad-hoc signing failed — the app was built but Gatekeeper will refuse it." >&2
+fi
 
 echo "Built $APP"

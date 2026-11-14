@@ -26,20 +26,6 @@ await page.waitForSelector('.sheet', { timeout: 60000 });
 await page.waitForTimeout(900);
 await page.screenshot({ path: `${OUT}/02-result.png` });
 
-// advanced streams
-const toggle = page.locator('#advancedToggle');
-if (await toggle.count()) {
-  await toggle.click();
-  await page.waitForTimeout(400);
-  await page.screenshot({ path: `${OUT}/03-advanced.png` });
-  const rows = page.locator('#advanced .fmt-row');
-  if (await rows.count()) {
-    await rows.nth(3).click();
-    await page.waitForTimeout(350);
-    await page.screenshot({ path: `${OUT}/04-custom.png` });
-  }
-}
-
 // settings
 await page.click('.rail-btn[data-view="settings"]');
 await page.waitForTimeout(500);

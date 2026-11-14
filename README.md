@@ -11,7 +11,7 @@ no telemetry, no cloud.
 
 ## Install
 
-1. Download `Vesper-1.0.0.dmg` from [Releases](https://github.com/K3Tamaa/vesper/releases).
+1. Download the latest `Vesper-<version>.dmg` from [Releases](https://github.com/K3Tamaa/vesper/releases).
 2. Optionally verify it:
    ```sh
    shasum -a 256 -c SHA256SUMS
@@ -148,14 +148,23 @@ npm start          # http://127.0.0.1:4173
 - `POST /api/app/update/(check|download|install)`
 - `POST /api/settings`, `/api/history/*`, `/api/open`, `/api/reveal`, `/api/thumb`
 
+Requests must address `127.0.0.1:PORT` (or `localhost:PORT`); a foreign `Host` or
+`Origin` is refused, and every POST needs `X-Vesper: 1` plus
+`Content-Type: application/json`. `/api/health` is readable without the marker so the
+native shell can find the server.
+
 URLs are always passed to yt-dlp as a single argv entry after `--`, never through a
-shell. The interface has no remote dependencies.
+shell. `--exec` and the other options that could run a command are refused in
+*Extra arguments*, and Reveal only opens files Vesper wrote itself. The interface has no
+remote dependencies.
 
 ## Notes
 
 - Playlist downloads run as one job and honor the item selection.
 - Live streams show an indeterminate progress bar until the byte total is known.
 - Sizes are estimates from yt-dlp metadata and are labelled with `≈`.
+- Queued jobs resume when Vesper reopens; a job that was mid-download becomes an error
+  with a Retry action rather than a ghost in the queue.
 - Vesper is a front end, not a replacement: format availability, site support, and
   extraction fixes come from yt-dlp itself.
 

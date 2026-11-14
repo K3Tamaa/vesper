@@ -38,7 +38,7 @@ if ! hdiutil attach -readwrite -noverify -noautoopen -mountpoint "$MOUNT" "$TMP"
   exit 1
 fi
 
-osascript >/dev/null 2>&1 <<APPLESCRIPT || true
+if ! osascript <<APPLESCRIPT
 tell application "Finder"
   tell disk "Vesper ${VERSION}"
     open
@@ -60,6 +60,9 @@ tell application "Finder"
   end tell
 end tell
 APPLESCRIPT
+then
+  echo "warning: Finder could not lay out the disk image — built with default positions." >&2
+fi
 
 sync
 hdiutil detach "$MOUNT" -quiet || true
